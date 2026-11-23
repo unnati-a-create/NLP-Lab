@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NLP Lab – Vocabulary, Tokens & Embeddings</title>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#dbe1ee;--accent:#4f46e5;--accent2:#e0e7ff;--ok:#059669;--okbg:#d1fae5;--bad:#b45309;--badbg:#fef3c7;--unk:#be123c;--unkbg:#ffe4e6;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f172a;--card:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--border:#334155;--accent:#818cf8;--accent2:#312e81;--ok:#6ee7b7;--okbg:#064e3b;--bad:#fcd34d;--badbg:#78350f;--unk:#fda4af;--unkbg:#881337;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--border:#334155;--accent:#818cf8;--accent2:#312e81;--ok:#6ee7b7;--okbg:#064e3b;--bad:#fcd34d;--badbg:#78350f;--unk:#fda4af;--unkbg:#881337;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:22px 20px 8px;max-width:1100px;margin:auto}
+h1{margin:0;font-size:24px}header p{margin:4px 0 0;color:var(--muted)}
+nav{display:flex;gap:8px;max-width:1100px;margin:12px auto 0;padding:0 20px;flex-wrap:wrap}
+nav button{flex:1;min-width:140px;padding:11px 14px;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:12px;font:600 14px inherit;cursor:pointer}
+nav button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+main{max-width:1100px;margin:14px auto 40px;padding:0 20px}
+section{display:none}section.on{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+.card h2{margin:0 0 4px;font-size:18px}.hint{color:var(--muted);font-size:13px;margin:0 0 10px}
+textarea,input[type=text]{width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Menlo,Consolas,monospace}
+.btn{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:9px 16px;font:600 14px inherit;cursor:pointer;margin:8px 8px 0 0}
+.btn.alt{background:var(--accent2);color:var(--accent)}
+.row{display:flex;gap:14px;flex-wrap:wrap}.row>*{flex:1;min-width:260px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}.stat{background:var(--accent2);color:var(--accent);padding:4px 12px;border-radius:99px;font-weight:600;font-size:13px}
+.tw{max-height:360px;overflow:auto;border:1px solid var(--border);border-radius:10px}
+table{width:100%;border-collapse:collapse}th,td{padding:7px 12px;text-align:left;border-bottom:1px solid var(--border)}
+th{position:sticky;top:0;background:var(--card);font-size:13px;color:var(--muted)}
+td.id{font-family:ui-monospace,monospace;font-weight:700;color:var(--accent)}
+.tag{font-size:11px;padding:1px 8px;border-radius:99px;background:var(--accent2);color:var(--accent)}
+.tag.u{background:var(--unkbg);color:var(--unk)}.tag.c{background:var(--badbg);color:var(--bad)}
+.chip{display:inline-flex;flex-direction:column;align-items:center;border-radius:10px;padding:5px 11px;margin:3px;font-family:ui-monospace,monospace}
+.chip b{font-size:15px}.chip small{font-size:11px;opacity:.85}
+.chip.k{background:var(--okbg);color:var(--ok)}.chip.p{background:var(--badbg);color:var(--bad)}.chip.x{background:var(--unkbg);color:var(--unk)}
+.grp{display:inline-flex;align-items:center;border:2px dashed var(--border);border-radius:14px;padding:2px;margin:4px}
+.grp>span{font-size:11px;color:var(--muted);padding:0 6px}
+.step{padding:8px 12px;border-left:4px solid var(--accent);background:var(--bg);border-radius:0 8px 8px 0;margin:6px 0;font-size:14px}
+.msg{color:var(--bad);font-size:13px;margin-top:6px}
+.badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700;color:#fff}
+.cw{position:relative}.cw svg{width:100%;height:auto;background:var(--bg);border-radius:10px;border:1px solid var(--border)}
+.tip{position:absolute;pointer-events:none;background:#0f172a;color:#fff;padding:6px 10px;border-radius:8px;font-size:12px;max-width:240px;display:none;z-index:5}
+.pt{cursor:pointer}.pt:hover circle,.pt:hover rect{stroke-width:4}
+.legend div{display:flex;align-items:center;gap:8px;margin:3px 0;font-size:13px}.sw{width:13px;height:13px;border-radius:50%;flex:none}
+.lbl{display:flex;gap:16px;flex-wrap:wrap;margin:6px 0}.lbl label{cursor:pointer;font-weight:600}
+svg text{fill:var(--text);font-size:11px;font-family:system-ui,sans-serif}
+</style>
+</head>
+<body>
+<header><h1>🧠 NLP Lab</h1><p>Build a vocabulary → tokenize sentences → see embeddings on a graph. Simplified, educational version (not a real GPT/BERT tokenizer).</p></header>
+<nav><button class="on" data-t="v">1 · Vocabulary Builder</button><button data-t="t">2 · Tokenizer</button><button data-t="e">3 · Vector Embeddings</button></nav>
+<main>
+<section id="v" class="on">
+<div class="card"><h2>Step 1: Enter sentences</h2><p class="hint">One sentence per line (use 6 or more). Words are lowercased and punctuation is ignored.</p>
+<textarea id="sent" rows="8">The cat sat on the mat.
+The dog sat on the rug.
+A cat chased the dog.
+The dog ran in the park.
+A bird sat on the tree.
+The cat and the dog are friends.</textarea>
+<div class="lbl"><label><input type="checkbox" id="alpha" checked> Also add single-letter pieces (a–z and ##a–##z) so unknown words can be split</label></div>
+<button class="btn" id="build">Build Vocabulary</button><button class="btn alt" id="addrow">+ Add sample sentence</button><button class="btn alt" id="clearv">Reset samples</button>
+<div class="msg" id="vmsg"></div></div>
+<div class="card"><h2>Vocabulary</h2><div class="stats" id="vstats"></div><div class="tw"><table><thead><tr><th>Word</th><th>Token ID</th><th>Type</th><th>Count</th></tr></thead><tbody id="vbody"></tbody></table></div></div>
+</section>
+
+<section id="t">
+<div class="card"><h2>Step 2: Tokenize a sentence</h2><p class="hint">Uses the vocabulary from Step 1. Unknown words are split into characters: first letter as-is, the rest with ## prefix.</p>
+<input type="text" id="tin" value="The cat sat on the wooden chair.">
+<button class="btn" id="tok">Tokenize</button><button class="btn alt" data-ex="The dog sat on the mat.">Example: all known</button><button class="btn alt" data-ex="A bird ate 3 berries!">Example: needs fallback</button></div>
+<div class="card"><h2>Result</h2><div class="hint">🟩 known word &nbsp; 🟨 character piece found in vocab &nbsp; 🟥 UNK (fallback)</div><div id="tout"></div><h2 style="margin-top:14px">Token ID list</h2><div id="tids" style="font-family:ui-monospace,monospace"></div><h2 style="margin-top:14px">How it worked</h2><div id="tsteps"></div></div>
+</section>
+
+<section id="e">
+<div class="card"><h2>Step 3: Vector embeddings</h2><p class="hint">Each sentence becomes a vector, then is squeezed into 2D (classical MDS) so distance on the graph = how different the vectors are. One sentence per line.</p>
+<textarea id="esent" rows="10">The cat sat on the mat.
+The bat sat on the mat.
+The cat sat on the wooden mat.
+A dog runs in the park.
+A puppy runs through the park.
+The kitten rested on the rug.
+The car drove down the road.
+An automobile sped along the street.
+She is happy today.
+She feels joyful today.</textarea>
+<div class="lbl"><label><input type="checkbox" id="cs" checked> Spelling-Based Embedding</label><label><input type="checkbox" id="cm" checked> Meaning-Based Embedding</label><label><input type="checkbox" id="v3" checked> 3D view (drag to rotate)</label></div>
+<button class="btn" id="plot">Plot Embeddings</button></div>
+<div id="charts"></div>
+</section>
+</main>
+<script>
+const $=s=>document.querySelector(s),esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const words=t=>t.toLowerCase().match(/[a-z0-9']+/g)||[];
+const lines=id=>$(id).value.split('\n').map(s=>s.trim()).filter(Boolean);
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button,section').forEach(x=>x.classList.remove('on'));b.classList.add('on');$('#'+b.dataset.t).classList.add('on');if(b.dataset.t==='e'&&!$('#charts').innerHTML)plot()});
+
+/* ---------- 1. Vocabulary ---------- */
+let vocab={list:[],map:new Map()};
+const SAMPLE=$('#sent').value;
+const EXTRA=["Birds can fly over the river.","My friend likes the big park."];
+function buildVocab(){
+  const sents=lines('#sent');$('#vmsg').textContent=sents.length<6?'Tip: add at least 6 sentences for a richer vocabulary (you have '+sents.length+').':'';
+  const list=[{w:'UNK',id:0,type:'special',count:0}],map=new Map([['UNK',0]]),cnt={};
+  sents.forEach(s=>words(s).forEach(w=>{if(!map.has(w)){map.set(w,list.length);list.push({w,id:list.length,type:'word',count:0})}list[map.get(w)].count++}));
+  const nW=list.length-1;
+  if($('#alpha').checked)for(const pre of ['','##'])for(const c of 'abcdefghijklmnopqrstuvwxyz'){const p=pre+c;if(!map.has(p)){map.set(p,list.length);list.push({w:p,id:list.length,type:'char piece',count:0})}}
+  vocab={list,map};
+  $('#vstats').innerHTML=`<span class="stat">${sents.length} sentences</span><span class="stat">${nW} unique words</span><span class="stat">${list.length} total tokens</span>`;
+  $('#vbody').innerHTML=list.map(r=>`<tr><td><b>${esc(r.w)}</b></td><td class="id">${r.id}</td><td><span class="tag ${r.type=='special'?'u':r.type=='word'?'':'c'}">${r.type}</span></td><td>${r.type=='char piece'?'–':r.count}</td></tr>`).join('');
+  tokenizeNow();
+}
+$('#build').onclick=buildVocab;
+$('#addrow').onclick=()=>{const e=EXTRA.find(x=>!$('#sent').value.includes(x));$('#sent').value+=(e?'\n'+e:'\nAdd your own sentence here.')};
+$('#clearv').onclick=()=>{$('#sent').value=SAMPLE;buildVocab()};
+$('#alpha').onchange=buildVocab;
+
+/* ---------- 2. Tokenizer ---------- */
+function tokenizeNow(){
+  const ws=words($('#tin').value),out=[],ids=[],steps=[];
+  if(!ws.length){$('#tout').innerHTML='<i>Type a sentence first.</i>';$('#tids').textContent='';$('#tsteps').innerHTML='';return}
+  ws.forEach(w=>{
+    if(vocab.map.has(w)){const id=vocab.map.get(w);ids.push(id);out.push(`<span class="chip k"><b>${esc(w)}</b><small>ID ${id}</small></span>`);steps.push(`<b>${esc(w)}</b> → found in vocabulary → ID <b>${id}</b>.`);return}
+    const parts=[...w].map((c,i)=>{const p=i?'##'+c:c;const ok=vocab.map.has(p);return{p,ok,id:ok?vocab.map.get(p):0}});
+    out.push('<span class="grp"><span>'+esc(w)+'</span>'+parts.map(x=>`<span class="chip ${x.ok?'p':'x'}"><b>${esc(x.p)}</b><small>${x.ok?'ID '+x.id:'UNK '+x.id}</small></span>`).join('')+'</span>');
+    parts.forEach(x=>ids.push(x.id));
+    const miss=parts.filter(x=>!x.ok).length;
+    steps.push(`<b>${esc(w)}</b> → NOT in vocabulary → split into characters: <code>${parts.map(x=>esc(x.p)).join(' ')}</code>. ${miss?`${miss} piece(s) not in vocab → fallback to <b>UNK (ID 0)</b>.`:'All pieces exist in the vocabulary, so each gets its own ID.'}`);
+  });
+  $('#tout').innerHTML=out.join('');$('#tids').textContent='['+ids.join(', ')+']';$('#tsteps').innerHTML=steps.map(s=>`<div class="step">${s}</div>`).join('');
+}
+$('#tok').onclick=tokenizeNow;$('#tin').onkeydown=e=>{if(e.key==='Enter')tokenizeNow()};
+document.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>{$('#tin').value=b.dataset.ex;tokenizeNow()});
+
+/* ---------- 3. Embeddings ---------- */
+const STOP=new Set('the a an on in through is are down along at of to feels'.split(' '));
+const CON={};const def=(ws,cs)=>ws.split(' ').forEach(w=>CON[w]=cs);
+def('cat kitten kitty feline',[['CAT',1],['PET',.5]]);def('dog puppy pup hound',[['DOG',1],['PET',.5]]);
+def('mat rug carpet',[['FLOOR_COVER',1]]);def('sat rested sits rests lay relaxed',[['REST',1]]);
+def('runs sprints races jogs dashes',[['RUN',1]]);def('park garden playground',[['PARK',1]]);
+def('car automobile vehicle',[['VEHICLE',1],['TRANSPORT',.5]]);def('drove drives sped raced',[['DRIVE',1],['TRANSPORT',.5]]);
+def('road street highway',[['ROAD',1]]);def('happy joyful glad cheerful',[['HAPPY',1]]);def('bat',[['BAT',1]]);def('wooden',[['WOOD',1]]);
+const spellVec=s=>{const t=' '+s.toLowerCase().replace(/[^a-z ]/g,'')+' ',v={};for(let i=0;i<t.length-2;i++){const g=t.slice(i,i+3);v[g]=(v[g]||0)+1}return v};
+const meanVec=s=>{const v={};words(s).filter(w=>!STOP.has(w)).forEach(w=>(CON[w]||[[w,1]]).forEach(([c,x])=>v[c]=(v[c]||0)+x));return v};
+const cos=(a,b)=>{let d=0,na=0,nb=0;for(const k in a){na+=a[k]*a[k];if(b[k])d+=a[k]*b[k]}for(const k in b)nb+=b[k]*b[k];return na&&nb?d/Math.sqrt(na*nb):0};
+function mds(D){const n=D.length,D2=D.map(r=>r.map(x=>x*x)),rm=D2.map(r=>r.reduce((a,b)=>a+b)/n),tm=rm.reduce((a,b)=>a+b)/n;
+  let M=D2.map((r,i)=>r.map((x,j)=>-.5*(x-rm[i]-rm[j]+tm))),vs=[];
+  for(let k=0;k<3;k++){let v=Array.from({length:n},(_,i)=>Math.sin(i*1.7+1+k*3)+.3),l=1;
+    for(let it=0;it<300;it++){const w=M.map(r=>r.reduce((a,x,j)=>a+x*v[j],0));l=Math.hypot(...w)||1;v=w.map(x=>x/l)}
+    vs.push(v.map(x=>x*Math.sqrt(l)));M=M.map((r,i)=>r.map((x,j)=>x-l*v[i]*v[j]))}
+  return vs[0].map((_,i)=>[vs[0][i],vs[1][i],vs[2][i]])}
+const COL=['#2563eb','#db2777','#059669','#d97706','#7c3aed','#0891b2','#dc2626'],W=560,H=380,PAD=44;
+function groups(S,thr){const p=S.map((_,i)=>i),f=x=>p[x]==x?x:p[x]=f(p[x]);for(let i=0;i<S.length;i++)for(let j=i+1;j<S.length;j++)if(S[i][j]>=thr)p[f(i)]=f(j);
+  const m={};S.forEach((_,i)=>(m[f(i)]=m[f(i)]||[]).push(i));return Object.values(m)}
+function chart(mode,sents){
+  const vecs=sents.map(mode=='s'?spellVec:meanVec),n=sents.length;
+  const S=vecs.map(a=>vecs.map(b=>cos(a,b))),D=S.map(r=>r.map(x=>Math.max(0,1-x)));
+  let P=mds(D);const xs=P.map(p=>p[0]),ys=P.map(p=>p[1]),mnx=Math.min(...xs),mxx=Math.max(...xs),mny=Math.min(...ys),mxy=Math.max(...ys);
+  P=P.map(([x,y])=>[PAD+(x-mnx)/((mxx-mnx)||1)*(W-2*PAD),H-PAD-(y-mny)/((mxy-mny)||1)*(H-2*PAD)]);
+  for(let it=0;it<150;it++)for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){let dx=P[j][0]-P[i][0],dy=P[j][1]-P[i][1],d=Math.hypot(dx,dy)||.01;if(d<44){const k=(44-d)/2/d;P[i][0]-=dx*k;P[i][1]-=dy*k;P[j][0]+=dx*k;P[j][1]+=dy*k}}
+  P=P.map(([x,y])=>[Math.min(W-20,Math.max(20,x)),Math.min(H-20,Math.max(20,y))]);
+  const G=groups(S,mode=='s'?.6:.7),colOf={};let ci=0;
+  G.forEach(g=>{const c=g.length>1?COL[ci++%COL.length]:'#94a3b8';g.forEach(i=>colOf[i]=c)});
+  let svg=`<svg viewBox="0 0 ${W} ${H}">`;
+  for(let i=1;i<8;i++)svg+=`<line x1="${PAD+i*(W-2*PAD)/8}" y1="10" x2="${PAD+i*(W-2*PAD)/8}" y2="${H-26}" stroke="#94a3b8" stroke-opacity=".18"/>`;
+  for(let i=0;i<=6;i++)svg+=`<line x1="${PAD-10}" y1="${PAD+i*(H-2*PAD)/6}" x2="${W-10}" y2="${PAD+i*(H-2*PAD)/6}" stroke="#94a3b8" stroke-opacity=".18"/>`;
+  svg+=`<text x="${W/2}" y="${H-6}" text-anchor="middle">Dimension 1 →</text><text transform="translate(12 ${H/2}) rotate(-90)" text-anchor="middle">Dimension 2 →</text>`;
+  G.filter(g=>g.length>1).forEach(g=>{const cx=g.reduce((a,i)=>a+P[i][0],0)/g.length,cy=g.reduce((a,i)=>a+P[i][1],0)/g.length,r=Math.max(...g.map(i=>Math.hypot(P[i][0]-cx,P[i][1]-cy)))+20;svg+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${colOf[g[0]]}" fill-opacity=".08" stroke="${colOf[g[0]]}" stroke-dasharray="5 4"/>`});
+  P.forEach(([x,y],i)=>{const c=colOf[i];svg+=`<g class="pt" data-i="${i}">${mode=='s'?`<circle cx="${x}" cy="${y}" r="9" fill="${c}" stroke="#fff" stroke-width="2"/>`:`<rect x="-8" y="-8" width="16" height="16" transform="translate(${x} ${y}) rotate(45)" fill="${c}" stroke="#fff" stroke-width="2"/>`}<text x="${x>W/2?x-13:x+13}" y="${y+4}" text-anchor="${x>W/2?'end':'start'}" style="font-size:10px;font-weight:600" stroke="var(--bg)" stroke-width="3" paint-order="stroke">S${i+1}</text></g>`});
+  svg+='</svg>';
+  const pairs=[];for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)pairs.push([i,j,S[i][j]]);pairs.sort((a,b)=>b[2]-a[2]);
+  const el=document.createElement('div');el.className='card';
+  el.innerHTML=`<h2><span class="badge" style="background:${mode=='s'?'#2563eb':'#db2777'}">${mode=='s'?'● Spelling-Based':'◆ Meaning-Based'}</span></h2><p class="hint">${mode=='s'?'Vector = counts of 3-letter chunks (trigrams). Similar spelling → close together. Circles.':'Vector = concepts after mapping synonyms (kitten→CAT, rug→FLOOR_COVER…). Similar meaning → close together. Diamonds.'} Hover a point for the sentence, click to pin details.</p>
+  <div class="row"><div class="cw">${svg}<div class="tip"></div></div><div><b>Legend (clusters)</b><div class="legend">${G.map(g=>`<div><span class="sw" style="background:${colOf[g[0]]}"></span><span>${g.length>1?g.map(i=>'S'+(i+1)).join(', '):'S'+(g[0]+1)+' (alone)'}</span></div>`).join('')}</div>
+  <b>Most similar pairs</b>${pairs.slice(0,5).map(p=>`<div style="font-size:13px">S${p[0]+1} ↔ S${p[1]+1} · <b>${Math.round(p[2]*100)}%</b></div>`).join('')}<div class="step detail" style="margin-top:10px">Click a point to see its closest neighbours.</div></div></div>
+  <details style="margin-top:8px"><summary>Sentence list</summary>${sents.map((s,i)=>`<div style="font-size:13px"><b>S${i+1}</b> ${esc(s)}</div>`).join('')}</details>`;
+  const tip=el.querySelector('.tip'),cw=el.querySelector('.cw'),det=el.querySelector('.detail');
+  el.querySelectorAll('.pt').forEach(g=>{const i=+g.dataset.i;
+    g.onmousemove=e=>{const r=cw.getBoundingClientRect();tip.style.display='block';tip.style.left=Math.min(e.clientX-r.left+12,r.width-200)+'px';tip.style.top=(e.clientY-r.top+12)+'px';tip.textContent='S'+(i+1)+': '+sents[i]};
+    g.onmouseleave=()=>tip.style.display='none';
+    g.onclick=()=>{const nb=S[i].map((v,j)=>[j,v]).filter(x=>x[0]!=i).sort((a,b)=>b[1]-a[1]).slice(0,3);det.innerHTML=`<b>S${i+1}:</b> ${esc(sents[i])}<br>Closest: ${nb.map(x=>`S${x[0]+1} (${Math.round(x[1]*100)}%)`).join(', ')}`}});
+  return el}
+function chart3d(mode,sents){
+  const n=sents.length,vecs=sents.map(mode=='s'?spellVec:meanVec),S=vecs.map(a=>vecs.map(b=>cos(a,b))),D=S.map(r=>r.map(x=>Math.max(0,1-x)));
+  let P=mds(D);const mid=k=>(Math.min(...P.map(p=>p[k]))+Math.max(...P.map(p=>p[k])))/2,m=[mid(0),mid(1),mid(2)];
+  const big=Math.max(...P.map(p=>Math.max(...p.map((x,k)=>Math.abs(x-m[k])))))||1;P=P.map(p=>p.map((x,k)=>(x-m[k])/big));
+  for(let it=0;it<150;it++)for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){const d=[0,1,2].map(k=>P[j][k]-P[i][k]),L=Math.hypot(...d)||.01;if(L<.16){const k=(.16-L)/2/L;for(let a=0;a<3;a++){P[i][a]-=d[a]*k;P[j][a]+=d[a]*k}}}
+  const G=groups(S,mode=='s'?.6:.7),colOf={},cen={};let ci=0;
+  G.forEach(g=>{const c=g.length>1?COL[ci++%COL.length]:'#94a3b8';g.forEach(i=>colOf[i]=c);if(g.length>1){const ce=[0,1,2].map(k=>g.reduce((a,i)=>a+P[i][k],0)/g.length);g.forEach(i=>cen[i]=ce)}});
+  const pairs=[];for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)pairs.push([i,j,S[i][j]]);pairs.sort((a,b)=>b[2]-a[2]);
+  const el=document.createElement('div');el.className='card';
+  el.innerHTML=`<h2><span class="badge" style="background:${mode=='s'?'#2563eb':'#db2777'}">${mode=='s'?'● Spelling-Based':'◆ Meaning-Based'} · 3D</span></h2><p class="hint">Drag to rotate, scroll or use +/− to zoom, hover for the sentence, click a point to pin details. Dashed lines join sentences of the same cluster; the faint stem and shadow on the floor show depth.</p>
+  <div class="row"><div><canvas style="width:100%;aspect-ratio:560/380;background:var(--bg);border:1px solid var(--border);border-radius:10px;touch-action:none;cursor:grab"></canvas><button class="btn alt ar">⏸ Auto-rotate</button><button class="btn alt zi">＋</button><button class="btn alt zo">－</button><button class="btn alt rs">Reset view</button></div>
+  <div><b>Legend (clusters)</b><div class="legend">${G.map(g=>`<div><span class="sw" style="background:${colOf[g[0]]}"></span><span>${g.length>1?g.map(i=>'S'+(i+1)).join(', '):'S'+(g[0]+1)+' (alone)'}</span></div>`).join('')}</div>
+  <b>Most similar pairs</b>${pairs.slice(0,5).map(p=>`<div style="font-size:13px">S${p[0]+1} ↔ S${p[1]+1} · <b>${Math.round(p[2]*100)}%</b></div>`).join('')}<div class="step detail" style="margin-top:10px">Click a point to see its closest neighbours.</div></div></div>
+  <details style="margin-top:8px"><summary>Sentence list</summary>${sents.map((s,i)=>`<div style="font-size:13px"><b>S${i+1}</b> ${esc(s)}</div>`).join('')}</details>`;
+  const cv=el.querySelector('canvas'),cx=cv.getContext('2d'),det=el.querySelector('.detail'),dpr=2;cv.width=W*dpr;cv.height=H*dpr;
+  const st={ay:.7,ax:.35,z:1,auto:true,hov:-1,pin:-1,drag:null,moved:0,ready:false};let scr=[];
+  const proj=p=>{const ca=Math.cos(st.ay),sa=Math.sin(st.ay),cb=Math.cos(st.ax),sb=Math.sin(st.ax),x1=p[0]*ca+p[2]*sa,z1=-p[0]*sa+p[2]*ca,y1=p[1]*cb-z1*sb,z2=p[1]*sb+z1*cb,f=1/(1+z2*.22),s=125*st.z*f;return{x:W/2+x1*s,y:H/2-y1*s,d:z2,f}};
+  function draw(){
+    const tc=getComputedStyle(document.body).color;cx.setTransform(dpr,0,0,dpr,0,0);cx.clearRect(0,0,W,H);cx.textBaseline='middle';cx.lineWidth=1;
+    cx.strokeStyle='rgba(148,163,184,.22)';for(let i=-4;i<=4;i++){const t=i/4*1.2;[[[t,-1.2,-1.2],[t,-1.2,1.2]],[[-1.2,-1.2,t],[1.2,-1.2,t]]].forEach(([a,b])=>{const A=proj(a),B=proj(b);cx.beginPath();cx.moveTo(A.x,A.y);cx.lineTo(B.x,B.y);cx.stroke()})}
+    [[1,0,0,'X'],[0,1,0,'Y'],[0,0,1,'Z']].forEach(([a,b,c,l])=>{const p1=proj([-a*1.2,-b*1.2,-c*1.2]),p2=proj([a*1.2,b*1.2,c*1.2]);cx.strokeStyle='rgba(148,163,184,.6)';cx.beginPath();cx.moveTo(p1.x,p1.y);cx.lineTo(p2.x,p2.y);cx.stroke();cx.fillStyle=tc;cx.globalAlpha=.6;cx.font='11px system-ui';cx.fillText('Dim '+l,p2.x+4,p2.y);cx.globalAlpha=1});
+    const pr=P.map(proj);scr=pr;
+    P.forEach((p,i)=>{if(cen[i]){const c=proj(cen[i]);cx.strokeStyle=colOf[i];cx.globalAlpha=.5;cx.setLineDash([4,3]);cx.beginPath();cx.moveTo(pr[i].x,pr[i].y);cx.lineTo(c.x,c.y);cx.stroke();cx.setLineDash([]);cx.globalAlpha=1}});
+    [...pr.keys()].sort((a,b)=>pr[b].d-pr[a].d).forEach(i=>{const q=pr[i],f=proj([P[i][0],-1.2,P[i][2]]);
+      cx.strokeStyle='rgba(148,163,184,.45)';cx.beginPath();cx.moveTo(q.x,q.y);cx.lineTo(f.x,f.y);cx.stroke();
+      cx.fillStyle='rgba(148,163,184,.35)';cx.beginPath();cx.ellipse(f.x,f.y,6*f.f,2.5*f.f,0,0,7);cx.fill();
+      const r=(i==st.hov||i==st.pin?11:8)*q.f;cx.fillStyle=colOf[i];cx.strokeStyle='#fff';cx.lineWidth=2;cx.beginPath();
+      if(mode=='s')cx.arc(q.x,q.y,r,0,7);else{cx.moveTo(q.x,q.y-r*1.3);cx.lineTo(q.x+r*1.3,q.y);cx.lineTo(q.x,q.y+r*1.3);cx.lineTo(q.x-r*1.3,q.y)}
+      cx.closePath();cx.fill();cx.stroke();cx.lineWidth=1;cx.fillStyle=tc;cx.font='bold 12px system-ui';cx.textAlign=q.x>W/2?'right':'left';cx.fillText(sents[i].replace(/[.!?]+$/,''),q.x+(q.x>W/2?-1:1)*(r+5),q.y);cx.textAlign='left'});
+    const h=st.hov>=0?st.hov:st.pin;if(h>=0){const q=pr[h],t=sents[h];cx.font='12px system-ui';const w=cx.measureText(t).width+14,x=Math.max(4,Math.min(q.x+12,W-w-4)),y=Math.min(q.y+14,H-26);cx.fillStyle='#0f172a';cx.fillRect(x,y,w,22);cx.fillStyle='#fff';cx.fillText(t,x+7,y+11)}
+  }
+  (function loop(){if(st.ready&&!cv.isConnected)return;st.ready=cv.isConnected;if(st.auto&&!st.drag)st.ay+=.005;draw();requestAnimationFrame(loop)})();
+  const pos=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]};
+  const show=i=>{const nb=S[i].map((v,j)=>[j,v]).filter(x=>x[0]!=i).sort((a,b)=>b[1]-a[1]).slice(0,3);det.innerHTML=`<b>S${i+1}:</b> ${esc(sents[i])}<br>Closest: ${nb.map(x=>`S${x[0]+1} (${Math.round(x[1]*100)}%)`).join(', ')}`};
+  cv.onpointerdown=e=>{cv.setPointerCapture(e.pointerId);st.drag=pos(e);st.moved=0;cv.style.cursor='grabbing'};
+  cv.onpointermove=e=>{const [x,y]=pos(e);if(st.drag){st.ay+=(x-st.drag[0])*.01;st.ax=Math.max(-1.4,Math.min(1.4,st.ax-(y-st.drag[1])*.01));st.moved+=Math.abs(x-st.drag[0])+Math.abs(y-st.drag[1]);st.drag=[x,y]}
+    let b=-1,bd=20;scr.forEach((q,i)=>{const d=Math.hypot(q.x-x,q.y-y);if(d<bd){bd=d;b=i}});st.hov=b};
+  cv.onpointerup=()=>{if(st.moved<5&&st.hov>=0){st.pin=st.hov;show(st.hov)}st.drag=null;cv.style.cursor='grab'};
+  cv.onpointerleave=()=>{if(!st.drag)st.hov=-1};
+  cv.onwheel=e=>{e.preventDefault();st.z=Math.max(.5,Math.min(3,st.z*(e.deltaY<0?1.1:.9)))};
+  const ar=el.querySelector('.ar');ar.onclick=()=>{st.auto=!st.auto;ar.textContent=st.auto?'⏸ Auto-rotate':'▶ Auto-rotate'};
+  el.querySelector('.zi').onclick=()=>st.z=Math.min(3,st.z*1.2);el.querySelector('.zo').onclick=()=>st.z=Math.max(.5,st.z/1.2);
+  el.querySelector('.rs').onclick=()=>{st.ay=.7;st.ax=.35;st.z=1};
+  return el}
+function named(el,s){
+  const nm=s.map(x=>x.replace(/[.!?]+$/,''));
+  const fix=n=>{if(n.nodeType==3){const t=n.nodeValue,u=t.replace(/\bS(\d+):\s*/g,'').replace(/\bS(\d+)\b/g,(m,k)=>nm[k-1]||m);if(u!==t)n.nodeValue=u}else n.childNodes.forEach(fix)};
+  const dt=el.querySelector('details');if(dt)dt.remove();fix(el);
+  new MutationObserver(ms=>ms.forEach(m=>{m.addedNodes.forEach(fix);if(m.type=='characterData')fix(m.target)})).observe(el,{childList:true,subtree:true,characterData:true});
+  return el}
+function plot(){
+  const sents=lines('#esent'),box=$('#charts');box.innerHTML='';
+  if(sents.length<3){box.innerHTML='<div class="card msg">Please enter at least 3 sentences.</div>';return}
+  if(!$('#cs').checked&&!$('#cm').checked){box.innerHTML='<div class="card msg">Select at least one embedding type.</div>';return}
+  const fn=(m,s)=>named($('#v3').checked?chart3d(m,s):chart(m,s),s);if($('#cs').checked)box.appendChild(fn('s',sents));if($('#cm').checked)box.appendChild(fn('m',sents));
+}
+$('#plot').onclick=plot;$('#cs').onchange=$('#cm').onchange=$('#v3').onchange=plot;
+buildVocab();
+</script>
+</body>
+</html>
